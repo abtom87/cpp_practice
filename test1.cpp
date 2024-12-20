@@ -42,17 +42,13 @@ public:
   }
 
   void remove_book(uint32_t id) {
-
-    auto it =
-        std::find_if(mBooks.begin(), mBooks.end(), [id](const Book &book) {
-          std::string title;
-          title = book.getTitle();
-          return book.getID() == id;
-        });
+    auto match_id = [id](const Book &book) { return book.getID() == id; };
+    auto it = std::find_if(mBooks.begin(), mBooks.end(), match_id);
 
     if (it != mBooks.end()) {
       mBooks.erase(it); // Remove the book found at iterator `it`
-      std::cout << "Book with ID " << id << " and title " << it->getTitle() << " removed." << std::endl;
+      std::cout << "Book with ID " << id << " and title " << it->getTitle()
+                << " removed." << std::endl;
     } else {
       std::cout << "No book with ID " << id << " found.";
     }
@@ -62,7 +58,6 @@ public:
 int main() {
 
   Library lib;
-  std::cout << __cplusplus << std::endl;
 
   Book book1("Tovia Singer", "Let's get biblical", 124);
   Book book2("Jon Erikson", "Art of exploitation", 11124);
