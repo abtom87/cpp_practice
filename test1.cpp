@@ -53,6 +53,16 @@ public:
       std::cout << "No book with ID " << id << " found.";
     }
   }
+
+  void remove_book_swap(const uint32_t id) {
+    for (auto &book : mBooks) {
+      if (book.getID() == id) {
+        std::swap(book, mBooks.back());
+        mBooks.pop_back();
+        break;
+      }
+    }
+  }
 };
 
 int main() {
@@ -68,7 +78,7 @@ int main() {
   lib.append_book(book3);
 
   lib.print_list();
-  lib.remove_book(124);
+  lib.remove_book_swap(124);
   lib.print_list();
   return 0;
 }
