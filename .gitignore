@@ -1,2 +1,6 @@
 .vscode/*
 a
+a.out
+valgrind-out.txt
+test
+*/build/*
