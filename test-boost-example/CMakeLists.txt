@@ -5,7 +5,8 @@ project(${PROJ_NAME})
 
 include_directories("/usr/local/lib/include/")
 
-add_compile_definitions(IP_ADDR="93.184.216.34" PORT=80)
+#add_compile_definitions(IP_ADDR="93.184.216.34" PORT=80)
+add_compile_definitions(IP_ADDR="51.38.81.49" PORT=80)
 
 # file(GLOB_RECURSE sources ./test_ObsDesign.cpp ./main/*.h)
 
