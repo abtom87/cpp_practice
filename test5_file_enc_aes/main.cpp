@@ -5,8 +5,13 @@ int main() {
   std::cout << "Enter password: ";
   std::cin >> file_password;
 
-  std::string hashedPass = "";
   FileCryptoAES objAESCrypto(file_password);
+
+  unsigned char inBuffer[] = "HELLO EQ 123566 ABCDEF 1211 34567";
+
+  // Initialize a vector from the array
+  std::vector<std::uint8_t> input_vec(std::begin(inBuffer), std::end(inBuffer));
+  std::cout << "Inp data: " << input_vec.data() << std::endl;
 
   // Initialisation vector
   objAESCrypto.fill_iv_buffer();
@@ -15,7 +20,7 @@ int main() {
   objAESCrypto.generate_key_from_pass();
 
   std::cout << "Encrypting..." << std::endl;
-  objAESCrypto.encrypt();
+  objAESCrypto.encrypt(input_vec);
 
   std::cout << "Decrypting..." << std::endl;
   objAESCrypto.decrypt();

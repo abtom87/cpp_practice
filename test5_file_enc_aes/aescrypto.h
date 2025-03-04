@@ -53,7 +53,7 @@ public:
 
   void fill_iv_buffer();
   void generate_key_from_pass();
-  void encrypt();
+  void encrypt(const std::vector<std::uint8_t> &inp_vec);
   void decrypt();
   void print_decrypted_buff();
 };
