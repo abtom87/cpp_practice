@@ -13,12 +13,6 @@ int main() {
   std::vector<std::uint8_t> input_vec(std::begin(inBuffer), std::end(inBuffer));
   std::cout << "Inp data: " << input_vec.data() << std::endl;
 
-  // Initialisation vector
-  objAESCrypto.fill_iv_buffer();
-
-  // Generate Key from entered password
-  objAESCrypto.generate_key_from_pass();
-
   std::cout << "Encrypting..." << std::endl;
   objAESCrypto.encrypt(input_vec);
 

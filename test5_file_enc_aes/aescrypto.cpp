@@ -1,6 +1,9 @@
 #include "aescrypto.h"
+#include <iomanip>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
-void FileCryptoAES::hexToBytes(const std::string &hex) {
+void FileCryptoAES::hex_to_bytes(const std::string &hex) {
 
   unsigned char bytes[kLenKey];
 
@@ -23,8 +26,8 @@ bool FileCryptoAES::calc_sha256() {
   unsigned char mdVal[EVP_MAX_MD_SIZE];
   unsigned int mdLen;
   EVP_DigestInit_ex(mdCtx, EVP_sha256(), NULL);
-  EVP_DigestUpdate(mdCtx, getFilePassword().c_str(),
-                   getFilePassword().length());
+  EVP_DigestUpdate(mdCtx, get_file_password().c_str(),
+                   get_file_password().length());
   EVP_DigestFinal_ex(mdCtx, mdVal, &mdLen);
   EVP_MD_CTX_free(mdCtx);
 
@@ -42,7 +45,7 @@ void FileCryptoAES::generate_key_from_pass() {
   calc_sha256();
   std::cout << "SHA256 password: " << get_hashed_pass() << std::endl;
 
-  hexToBytes(get_hashed_pass());
+  hex_to_bytes(get_hashed_pass());
 }
 
 void FileCryptoAES::encrypt(const std::vector<std::uint8_t> &inp_vec) {
@@ -82,7 +85,6 @@ void FileCryptoAES::decrypt() {
 
 void FileCryptoAES::print_decrypted_buff() {
 
-  std::cout << "Decrypted buffer: ";
   for (size_t i = 0; i < mDecryptedBuffer.size(); i++)
     printf("%c", mDecryptedBuffer[i]);
   printf("\n");
