@@ -13,5 +13,7 @@ file(GLOB SOURCES
 # add the data to the target, so it becomes visible in some IDE
 add_executable(${PROJ_NAME} ${SOURCES})
 
+target_link_libraries(${PROJ_NAME} PUBLIC -lcrypto)
+
 # just for example add some compiler flags
-target_compile_options(${PROJ_NAME} PUBLIC -std=c++17 -Wall -Wfloat-conversion -lcrypto)
+target_compile_options(${PROJ_NAME} PUBLIC -std=c++17 -Wall -Wfloat-conversion)

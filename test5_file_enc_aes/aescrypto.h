@@ -17,19 +17,43 @@ private:
 
   std::string mfilePassword;
   std::string mhashedPassword;
+
   std::vector<std::uint8_t> mKeyBuffer;
   std::vector<std::uint8_t> mInitialisationVector;
 
-  std::vector<std::uint8_t> mInputBuffer;
   std::vector<std::uint8_t> mOutputBuffer;
   std::vector<std::uint8_t> mDecryptedBuffer;
+  std::vector<std::uint8_t> mInputBuffer;
 
-  int outLen = 0, finalOutLen = 0;
+  int mOutLen, mFinalOutLen = 0;
+  int mDecLen, mFinalDecLen;
 
-  FileCryptoAES()
+  // Convert the first 32 hex characters (64 chars) into 32 raw bytes for AES
+  // key
+  void hexToBytes(const std::string &hex);
+
+  const std::string getFilePassword() { return mfilePassword; }
+
+  bool calc_sha256();
+  void set_hashed_pass(std::string &hashed_pass) {
+
+    mhashedPassword = hashed_pass;
+  }
+
+  std::string get_hashed_pass() { return mhashedPassword; }
+
+public:
+  FileCryptoAES(std::string password)
       : mKeyBuffer(kLenKey), mInitialisationVector(kIVLen),
         mOutputBuffer(kBuffSize), mDecryptedBuffer(kBuffSize),
-        mInputBuffer(kBuffSize) {}
+        mInputBuffer(kBuffSize) {
 
-  bool calc_sha256(std::string inp_pass, std::string &hashed_pass);
+    mfilePassword = password;
+  }
+
+  void fill_iv_buffer();
+  void generate_key_from_pass();
+  void encrypt();
+  void decrypt();
+  void print_decrypted_buff();
 };
