@@ -1,11 +1,4 @@
-#include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <stdbool.h>
 #include <vector>
 
 class FileCryptoAES {
@@ -30,9 +23,9 @@ private:
 
   // Convert the first 32 hex characters (64 chars) into 32 raw bytes for AES
   // key
-  void hexToBytes(const std::string &hex);
+  void hex_to_bytes(const std::string &hex);
 
-  const std::string getFilePassword() { return mfilePassword; }
+  const std::string get_file_password() { return mfilePassword; }
 
   bool calc_sha256();
   void set_hashed_pass(std::string &hashed_pass) {
@@ -41,6 +34,8 @@ private:
   }
 
   std::string get_hashed_pass() { return mhashedPassword; }
+  void fill_iv_buffer();
+  void generate_key_from_pass();
 
 public:
   FileCryptoAES(std::string password)
@@ -49,10 +44,14 @@ public:
         mInputBuffer(kBuffSize) {
 
     mfilePassword = password;
+
+    // Initialisation vector
+    fill_iv_buffer();
+
+    // Generate Key from entered password
+    generate_key_from_pass();
   }
 
-  void fill_iv_buffer();
-  void generate_key_from_pass();
   void encrypt(const std::vector<std::uint8_t> &inp_vec);
   void decrypt();
   void print_decrypted_buff();
