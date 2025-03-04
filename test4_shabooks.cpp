@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -11,17 +11,21 @@
  */
 
 std::string sha256(const std::string str) {
-  unsigned char hash[SHA256_DIGEST_LENGTH];
+  unsigned char hash[EVP_MAX_MD_SIZE];
+  unsigned int len;
 
-  SHA256_CTX sha256;
-  SHA256_Init(&sha256);
-  SHA256_Update(&sha256, str.c_str(), str.size());
-  SHA256_Final(hash, &sha256);
+  EVP_MD_CTX *sha256;
+  sha256 = EVP_MD_CTX_new();
+  EVP_DigestInit_ex(sha256, EVP_sha256(), NULL);
+  EVP_DigestUpdate(sha256, str.c_str(), str.size());
+  EVP_DigestFinal_ex(sha256, hash, &len);
+  EVP_MD_CTX_free(sha256);
 
   std::stringstream ss;
 
-  for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-    ss << std::hex << static_cast<int>(hash[i]);
+  for (int i = 0; i < len; i++) {
+    ss << std::hex << std::setw(2) << std::setfill('0')
+       << static_cast<int>(hash[i]);
   }
   return ss.str();
 }
@@ -88,20 +92,28 @@ public:
   }
 
   void find_book_by_hashed_title(std::string hashed_title) {
-    bool found = false;
-    for (auto it = mBooks.begin(); it != mBooks.end(); ++it) {
-      std::string hash_bk_title = sha256(it->getTitle());
+    auto matched_hash = [&](const Book &book) {
+      return sha256(book.getTitle()) == hashed_title;
+    };
+    auto it = std::find_if(mBooks.begin(), mBooks.end(), matched_hash);
 
-      // Compare hashes
-      if (hash_bk_title == hashed_title) {
-        std::cout << "Book found: " << it->getTitle() << std::endl;
-        found = true;
-        break; // Exit loop early once a match is found
+    if (it != mBooks.end())
+      std::cout << "Book found: " << it->getTitle() << std::endl;
+  };
+
+  void find_books_by_hashed_author(std::string hashed_auth) {
+    auto matched_hash = [&](const Book &book) {
+      return sha256(book.getAuthor()) == hashed_auth;
+    };
+    auto it = std::find_if(mBooks.begin(), mBooks.end(), matched_hash);
+
+    auto match_hash_auth = it;
+
+    for (auto iter = mBooks.begin(); iter != mBooks.end(); ++iter) {
+      if (iter->getAuthor() == match_hash_auth->getAuthor() &&
+          iter != mBooks.end()) {
+        std::cout << "Book Title: " << iter->getTitle() << std::endl;
       }
-    }
-
-    if (!found) {
-      std::cout << "No book found with the given hashed title." << std::endl;
     }
   }
 };
@@ -113,16 +125,18 @@ int main() {
   Book book1("Tovia Singer", "Let's get biblical", 124);
   Book book2("Jon Erikson", "Art of exploitation", 11124);
   Book book3("Tom Clancy", "Military book", 1234567);
+  Book book4("Tom Clancy", "Military book 2", 26324567);
 
   lib.append_book(book1);
   lib.append_book(book2);
   lib.append_book(book3);
+  lib.append_book(book4);
 
   lib.print_list();
+  std::cout << sha256(book3.getTitle()) << std::endl;
 
-  std::string hashed_title = sha256(book1.getTitle());
-
-  lib.find_book_by_hashed_title(hashed_title);
+  lib.find_book_by_hashed_title(sha256(book4.getTitle()));
+  lib.find_books_by_hashed_author(sha256("Tovia Singer"));
 
   return 0;
 }
