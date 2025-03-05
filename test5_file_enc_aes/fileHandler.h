@@ -13,33 +13,15 @@ private:
   std::uint32_t mNumIterations;
   std::uint32_t mNumRemBytes;
   FileCryptoAES mAESCryptoOps;
-  std::ifstream mFileToEncrypt;
-  std::ofstream mFileToDecrypt;
+  std::ifstream mFileInput;
+  std::ofstream mFileOutput;
 
-  std::string get_file_content(const std::string &file_path);
+  void get_file_content(const std::string &file_path);
 
 public:
-  FileHandler(const std::string &file_path, FileCryptoAES &objAES)
-      : mAESCryptoOps(objAES) {
-
-    mFileToEncrypt.open(file_path);
-    mFileToDecrypt.open(file_path + "out");
-
-    if (false == mFileToEncrypt.good()) {
-      std::cerr << "Error opening " << file_path << '\n';
-    } else {
-
-      // Read the whole chunk
-      std::string fileContents((std::istreambuf_iterator<char>(mFileToEncrypt)),
-                               std::istreambuf_iterator<char>());
-
-      mFileContents = fileContents;
-      mFileSize = mFileContents.length();
-
-      mNumIterations = mFileSize / mAESCryptoOps.get_inp_buffer_size();
-
-      mNumRemBytes = mFileSize % mAESCryptoOps.get_inp_buffer_size();
-    }
-  }
-  void encrypt_and_write_output();
+  FileHandler(FileCryptoAES &objAES) : mAESCryptoOps(objAES) {}
+  void encrypt_and_write_output(const std::string &inp_file_path,
+                                const std::string &out_file_path);
+  void decrypt_and_write_output(const std::string &encrypted_file_path,
+                                const std::string &decrypted_file_path);
 };
