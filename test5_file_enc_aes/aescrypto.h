@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 
@@ -40,7 +42,7 @@ private:
 public:
   FileCryptoAES(std::string password)
       : mKeyBuffer(kLenKey), mInitialisationVector(kIVLen),
-        mOutputBuffer(kBuffSize), mDecryptedBuffer(kBuffSize),
+        mOutputBuffer(kBuffSize + kIVLen), mDecryptedBuffer(kBuffSize),
         mInputBuffer(kBuffSize) {
 
     mfilePassword = password;
@@ -51,6 +53,9 @@ public:
     // Generate Key from entered password
     generate_key_from_pass();
   }
+
+  std::uint8_t get_inp_buffer_size() { return kBuffSize; }
+  std::vector<std::uint8_t> &get_encrypted_vector() { return mOutputBuffer; }
 
   void encrypt(const std::vector<std::uint8_t> &inp_vec);
   void decrypt();
