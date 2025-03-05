@@ -1,4 +1,5 @@
 #include "aescrypto.h"
+#include "fileHandler.h"
 
 int main() {
   std::string file_password;
@@ -21,6 +22,9 @@ int main() {
 
   std::cout << "Decrypted output..." << std::endl;
   objAESCrypto.print_decrypted_buff();
+
+  FileHandler objFHandler("file", objAESCrypto);
+  objFHandler.encrypt_and_write_output();
 
   return 0;
 }

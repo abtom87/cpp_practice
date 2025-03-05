@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.0)
 set(PROJ_NAME file_enc_aes)
 project(${PROJ_NAME})
 
-include_directories("/usr/lib/include/")
-
 file(GLOB SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/filehandling.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/aescrypto.cpp
 )
 
 # add the data to the target, so it becomes visible in some IDE
