@@ -9,6 +9,7 @@ private:
   static constexpr uint8_t kBuffSize = 64;
   static constexpr uint8_t kLenKey = 32;
   static constexpr uint8_t kIVLen = 16;
+  static constexpr uint8_t kOutBufferSize = 200;
 
   std::string mfilePassword;
   std::string mhashedPassword;
@@ -19,6 +20,8 @@ private:
   std::vector<std::uint8_t> mOutputBuffer;
   std::vector<std::uint8_t> mDecryptedBuffer;
   std::vector<std::uint8_t> mInputBuffer;
+
+  std::vector<std::uint8_t> mOutLenVect;
 
   int mOutLen, mFinalOutLen = 0;
   int mDecLen, mFinalDecLen;
@@ -42,7 +45,7 @@ private:
 public:
   FileCryptoAES(std::string password)
       : mKeyBuffer(kLenKey), mInitialisationVector(kIVLen),
-        mOutputBuffer(kBuffSize + kIVLen), mDecryptedBuffer(kBuffSize),
+        mOutputBuffer(kOutBufferSize), mDecryptedBuffer(kOutBufferSize),
         mInputBuffer(kBuffSize) {
 
     mfilePassword = password;
@@ -54,10 +57,14 @@ public:
     generate_key_from_pass();
   }
 
+  std::vector<std::uint8_t> &get_outlen_vect() { return mOutLenVect; }
   std::uint8_t get_inp_buffer_size() { return kBuffSize; }
+  std::uint8_t get_out_buffer_size() { return kOutBufferSize; }
   std::vector<std::uint8_t> &get_encrypted_vector() { return mOutputBuffer; }
+  std::vector<std::uint8_t> &get_decrypted_vector() { return mDecryptedBuffer; }
 
   void encrypt(const std::vector<std::uint8_t> &inp_vec);
-  void decrypt();
+  void decrypt(const std::vector<std::uint8_t> &inp_vec,
+               std::uint8_t &final_out_len);
   void print_decrypted_buff();
 };

@@ -51,7 +51,6 @@ void FileCryptoAES::generate_key_from_pass() {
 }
 
 void FileCryptoAES::encrypt(const std::vector<std::uint8_t> &inp_vec) {
-  static int i = 0;
   unsigned char *pKeyBuff = mKeyBuffer.data();
   unsigned char *pIVBuff = mInitialisationVector.data();
   unsigned char *pOutBuff = mOutputBuffer.data();
@@ -68,22 +67,28 @@ void FileCryptoAES::encrypt(const std::vector<std::uint8_t> &inp_vec) {
   // Correctly set the final output length
   mOutLen += mFinalOutLen;
 
+  // Out len is needed to decrypt correctly
+  mOutLenVect.push_back(mOutLen);
+
   EVP_CIPHER_CTX_free(enc_Ctx);
 }
 
-void FileCryptoAES::decrypt() {
+void FileCryptoAES::decrypt(const std::vector<std::uint8_t> &inp_vec,
+                            std::uint8_t &final_out_len) {
+
   unsigned char *pKeyBuff = mKeyBuffer.data();
   unsigned char *pIVBuff = mInitialisationVector.data();
-  unsigned char *pOutBuff = mOutputBuffer.data();
+  const unsigned char *pEncryptedBuff = (const unsigned char *)inp_vec.data();
 
   unsigned char *pDecBuff = mDecryptedBuffer.data();
 
   EVP_CIPHER_CTX *dec_ctx = EVP_CIPHER_CTX_new();
   EVP_DecryptInit_ex(dec_ctx, EVP_aes_256_cbc(), NULL, pKeyBuff, pIVBuff);
-  EVP_DecryptUpdate(dec_ctx, pDecBuff, &mDecLen, pOutBuff, mOutLen);
+  EVP_DecryptUpdate(dec_ctx, pDecBuff, &mDecLen, pEncryptedBuff, final_out_len);
   EVP_DecryptFinal_ex(dec_ctx, pDecBuff + mDecLen, &mFinalDecLen);
 
   mDecLen += mFinalDecLen;
+  mDecryptedBuffer.resize(mDecLen);
   EVP_CIPHER_CTX_free(dec_ctx);
 }
 
@@ -93,7 +98,6 @@ void FileCryptoAES::print_decrypted_buff() {
     printf("%c", mDecryptedBuffer[i]);
   printf("\n");
 }
-
 void FileCryptoAES::fill_iv_buffer() {
   unsigned char *pIVBuffer = &mInitialisationVector[0];
 
