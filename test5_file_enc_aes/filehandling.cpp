@@ -17,92 +17,57 @@ void FileHandler::get_file_content(const std::string &file_path) {
 
     mFileContents = fileContents;
     mFileSize = mFileContents.length();
-
-    mNumIterations = mFileSize / mAESCryptoOps.get_inp_buffer_size();
-
-    mNumRemBytes = mFileSize % mAESCryptoOps.get_inp_buffer_size();
   }
 }
-void FileHandler::encrypt_and_write_output(const std::string &inp_file_path,
-                                           const std::string &out_file_path) {
 
-  get_file_content(inp_file_path);
-  mFileOutput.open(out_file_path);
-
-  std::uint32_t begin_index, end_index;
-
-  // Encryted buffer length
-  std::uint8_t buff_len = mAESCryptoOps.get_inp_buffer_size();
-
-  for (std::uint32_t i = 0; i < mNumIterations; i++) {
-    begin_index = i * buff_len;     // 0, 64, 128
-    end_index = (i + 1) * buff_len; // 63, 127, 191
-
-    std::vector<std::uint8_t> temp_vec(mFileContents.begin() + begin_index,
-                                       mFileContents.begin() + end_index);
-
-    // Pass this temp_vec to encrypt function
-    mAESCryptoOps.encrypt(temp_vec);
-
-    // Get the output vector and append it to a file
-    std::vector<std::uint8_t> enc_vec_temp =
-        mAESCryptoOps.get_encrypted_vector();
-    mFileOutput.write(reinterpret_cast<const char *>(enc_vec_temp.data()),
-                      enc_vec_temp.size());
-  }
-
-  if (mNumRemBytes > 0) {
-    begin_index = mNumIterations * buff_len;
-    end_index = begin_index + mNumRemBytes;
-
-    std::vector<std::uint8_t> temp_vec_rem(mFileContents.begin() + begin_index,
-                                           mFileContents.begin() + end_index);
-
-    // Pass this temp_vec to encrypt function
-    mAESCryptoOps.encrypt(temp_vec_rem);
-
-    // Get the output vector and append it to a file
-    std::vector<std::uint8_t> enc_vec_temp =
-        mAESCryptoOps.get_encrypted_vector();
-
-    mFileOutput.write(reinterpret_cast<const char *>(enc_vec_temp.data()),
-                      enc_vec_temp.size());
-  }
-
-  mFileInput.close();
-  mFileOutput.close();
-}
-
-void FileHandler::decrypt_and_write_output(
-    const std::string &encrypted_file_path,
-    const std::string &decrypted_file_path) {
-
-  get_file_content(encrypted_file_path);
-  mFileOutput.open(decrypted_file_path);
+void FileHandler::process_file(const std::string &input_path,
+                               const std::string &output_path, bool encrypt) {
+  get_file_content(input_path);
+  mFileOutput.open(output_path);
 
   std::uint32_t begin_index = 0;
   std::uint32_t i = 0;
-  std::vector<std::uint8_t> OutLenVect = mAESCryptoOps.get_outlen_vect();
+  std::vector<std::uint8_t> out_len_vect = mAESCryptoOps.get_outlen_vect();
+  std::uint8_t buffer_size = encrypt ? mAESCryptoOps.get_inp_buffer_size()
+                                     : mAESCryptoOps.get_out_buffer_size();
+
   while (begin_index < mFileSize) {
-    std::uint32_t chunk_size =
-        std::min((std::uint32_t)mAESCryptoOps.get_out_buffer_size(),
-                 (std::uint32_t)(mFileSize - begin_index));
+    std::uint32_t chunk_size = std::min(static_cast<std::uint32_t>(buffer_size),
+                                        mFileSize - begin_index);
 
     std::vector<std::uint8_t> temp_vec(mFileContents.begin() + begin_index,
                                        mFileContents.begin() + begin_index +
                                            chunk_size);
 
-    mAESCryptoOps.decrypt(temp_vec, OutLenVect.at(i));
-    i++;
+    std::vector<std::uint8_t> processed_vec;
 
-    std::vector<std::uint8_t> dec_vec_temp =
-        mAESCryptoOps.get_decrypted_vector();
-    mFileOutput.write(reinterpret_cast<const char *>(dec_vec_temp.data()),
-                      dec_vec_temp.size());
+    if (encrypt) {
+      mAESCryptoOps.encrypt(temp_vec);
+      processed_vec = mAESCryptoOps.get_encrypted_vector();
+    } else {
+      mAESCryptoOps.decrypt(temp_vec, out_len_vect.at(i));
+      processed_vec = mAESCryptoOps.get_decrypted_vector();
+      i++;
+    }
+
+    mFileOutput.write(reinterpret_cast<const char *>(processed_vec.data()),
+                      processed_vec.size());
 
     begin_index += chunk_size;
   }
 
   mFileInput.close();
   mFileOutput.close();
+}
+
+void FileHandler::encrypt_and_write_output(const std::string &inp_file_path,
+                                           const std::string &out_file_path) {
+
+  process_file(inp_file_path, out_file_path, true);
+}
+
+void FileHandler::decrypt_and_write_output(
+    const std::string &encrypted_file_path,
+    const std::string &decrypted_file_path) {
+  process_file(encrypted_file_path, decrypted_file_path, false);
 }
