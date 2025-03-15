@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   const std::string dec_out_file_name = "file_out";
 
   objFHandler.encrypt_and_write_output(enc_inp_file_name, enc_out_file_name);
-  objFHandler.decrypt_and_write_output(dec_inp_file_name, dec_out_file_name);
+  // objFHandler.decrypt_and_write_output(dec_inp_file_name, dec_out_file_name);
 
   return 0;
 }
