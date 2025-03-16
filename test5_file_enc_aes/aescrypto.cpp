@@ -3,7 +3,8 @@
 #include <memory>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-void FileCryptoAES::hex_to_bytes(const std::string &hex) {
+void FileCryptoAES::hex_to_bytes(const std::string &hex,
+                                 std::vector<std::uint8_t> &buffer) {
 
   unsigned char bytes[kLenKey];
 
@@ -12,10 +13,10 @@ void FileCryptoAES::hex_to_bytes(const std::string &hex) {
   }
 
   // copy from unsigned char buffer to vector
-  mKeyBuffer.assign(bytes, bytes + kLenKey);
+  buffer.assign(bytes, bytes + kLenKey);
   std::cout << "Key buffer:    ";
   for (int i = 0; i < kLenKey; i++)
-    printf("%02X", mKeyBuffer[i]);
+    printf("%02X", buffer[i]);
   printf("\n");
 }
 
@@ -49,7 +50,7 @@ void FileCryptoAES::generate_key_from_pass() {
   calc_sha256();
   std::cout << "SHA256 password: " << get_hashed_pass() << std::endl;
 
-  hex_to_bytes(get_hashed_pass());
+  hex_to_bytes(get_hashed_pass(), mKeyBuffer);
 }
 
 void FileCryptoAES::encrypt(const std::vector<std::uint8_t> &inp_vec) {
@@ -78,7 +79,7 @@ void FileCryptoAES::encrypt(const std::vector<std::uint8_t> &inp_vec) {
 }
 
 void FileCryptoAES::decrypt(const std::vector<std::uint8_t> &inp_vec,
-                            std::uint8_t &final_out_len) {
+                            std::uint16_t &final_out_len) {
 
   unsigned char *pKeyBuff = mKeyBuffer.data();
   unsigned char *pIVBuff = mInitialisationVector.data();
@@ -106,8 +107,11 @@ void FileCryptoAES::print_decrypted_buff() {
 }
 void FileCryptoAES::fill_iv_buffer() {
   unsigned char *pIVBuffer = &mInitialisationVector[0];
+  std::string init_vect = "A672F9F21818CDD770A8FDF4EBF0605A";
 
-  RAND_bytes(pIVBuffer, kIVLen);
+  // Random IV only when decrypt follows encrypt
+  // RAND_bytes(pIVBuffer, kIVLen);
+  hex_to_bytes(init_vect, mInitialisationVector);
   std::cout << "IV: ";
   for (int i = 0; i < kIVLen; i++)
     printf("%X", mInitialisationVector[i]);

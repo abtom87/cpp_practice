@@ -6,10 +6,10 @@
 class FileCryptoAES {
 
 private:
-  static constexpr uint8_t kBuffSize = 64;
+  static constexpr uint16_t kBuffSize = 128;
   static constexpr uint8_t kLenKey = 32;
   static constexpr uint8_t kIVLen = 16;
-  static constexpr uint8_t kOutBufferSize = 200;
+  static constexpr uint16_t kOutBufferSize = 256;
 
   std::string mfilePassword;
   std::string mhashedPassword;
@@ -21,14 +21,14 @@ private:
   std::vector<std::uint8_t> mDecryptedBuffer;
   std::vector<std::uint8_t> mInputBuffer;
 
-  std::vector<std::uint8_t> mOutLenVect;
+  std::vector<std::uint16_t> mOutLenVect;
 
   int mOutLen, mFinalOutLen = 0;
   int mDecLen, mFinalDecLen;
 
   // Convert the first 32 hex characters (64 chars) into 32 raw bytes for AES
   // key
-  void hex_to_bytes(const std::string &hex);
+  void hex_to_bytes(const std::string &hex, std::vector<std::uint8_t> &buffer);
 
   const std::string get_file_password() { return mfilePassword; }
 
@@ -43,12 +43,12 @@ private:
   void generate_key_from_pass();
 
 public:
-  FileCryptoAES(std::string password)
+  FileCryptoAES(std::string &password)
       : mKeyBuffer(kLenKey), mInitialisationVector(kIVLen),
         mOutputBuffer(kOutBufferSize), mDecryptedBuffer(kOutBufferSize),
         mInputBuffer(kBuffSize) {
 
-    mfilePassword = password;
+    mfilePassword = std::move(password);
 
     // Initialisation vector
     fill_iv_buffer();
@@ -57,14 +57,17 @@ public:
     generate_key_from_pass();
   }
 
-  std::vector<std::uint8_t> &get_outlen_vect() { return mOutLenVect; }
-  std::uint8_t get_inp_buffer_size() { return kBuffSize; }
-  std::uint8_t get_out_buffer_size() { return kOutBufferSize; }
+  std::vector<std::uint16_t> &get_outlen_vect() { return mOutLenVect; }
+  void set_outlen_vect(std::vector<std::uint16_t> &out_len_vect) {
+    mOutLenVect = out_len_vect;
+  }
+  std::uint16_t get_inp_buffer_size() { return kBuffSize; }
+  std::uint16_t get_out_buffer_size() { return kOutBufferSize; }
   std::vector<std::uint8_t> &get_encrypted_vector() { return mOutputBuffer; }
   std::vector<std::uint8_t> &get_decrypted_vector() { return mDecryptedBuffer; }
 
   void encrypt(const std::vector<std::uint8_t> &inp_vec);
   void decrypt(const std::vector<std::uint8_t> &inp_vec,
-               std::uint8_t &final_out_len);
+               std::uint16_t &final_out_len);
   void print_decrypted_buff();
 };

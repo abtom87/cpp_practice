@@ -5,13 +5,13 @@
 
 void FileHandler::get_file_content(const std::string &file_path) {
 
-  mFileInput.open(file_path, std::ios::app | std::ios::binary);
+  mFileInput.open(file_path);
 
   if (false == mFileInput.good()) {
-    std::cerr << "Error opening " << file_path << '\n';
-    return;
+    std::cerr << "Error opening " << file_path << ". Exiting..." << '\n';
+    std::exit(EXIT_FAILURE);
   } else {
-
+    mFileInput.open(file_path, std::ios::app | std::ios::binary);
     // Read the whole chunk
     std::string fileContents((std::istreambuf_iterator<char>(mFileInput)),
                              std::istreambuf_iterator<char>());
@@ -19,6 +19,7 @@ void FileHandler::get_file_content(const std::string &file_path) {
     mFileContents = fileContents;
     mFileSize = mFileContents.length();
   }
+  mFileInput.close();
 }
 
 void FileHandler::process_file(const std::string &input_path,
@@ -28,9 +29,9 @@ void FileHandler::process_file(const std::string &input_path,
 
   std::uint32_t begin_index = 0;
   std::uint32_t i = 0;
-  std::vector<std::uint8_t> out_len_vect = mAESCryptoOps.get_outlen_vect();
-  std::uint8_t buffer_size = encrypt ? mAESCryptoOps.get_inp_buffer_size()
-                                     : mAESCryptoOps.get_out_buffer_size();
+
+  std::uint16_t buffer_size = encrypt ? mAESCryptoOps.get_inp_buffer_size()
+                                      : mAESCryptoOps.get_out_buffer_size();
 
   while (begin_index < mFileSize) {
     std::uint32_t chunk_size = std::min(static_cast<std::uint32_t>(buffer_size),
@@ -46,7 +47,7 @@ void FileHandler::process_file(const std::string &input_path,
       mAESCryptoOps.encrypt(temp_vec);
       processed_vec = mAESCryptoOps.get_encrypted_vector();
     } else {
-      mAESCryptoOps.decrypt(temp_vec, out_len_vect.at(i));
+      mAESCryptoOps.decrypt(temp_vec, mAESCryptoOps.get_outlen_vect().at(i));
       processed_vec = mAESCryptoOps.get_decrypted_vector();
       i++;
     }
@@ -57,7 +58,6 @@ void FileHandler::process_file(const std::string &input_path,
     begin_index += chunk_size;
   }
 
-  mFileInput.close();
   mFileOutput.close();
 }
 
@@ -65,49 +65,55 @@ void FileHandler::encrypt_and_write_output(const std::string &inp_file_path,
                                            const std::string &out_file_path) {
 
   process_file(inp_file_path, out_file_path, true);
-  std::string pattern = "DEADBEEF,";
-  std::string last_pattern = ",DEADBEEF";
-  std::ofstream test_file("test_file", std::ios::app | std::ios::binary);
-  test_file << "DEADBEEF"
-            << ",";
+
+  std::ofstream encrypted_file(out_file_path, std::ios::app | std::ios::binary);
+  encrypted_file << "DEADBEEF"
+                 << ",";
   for (auto &elem : mAESCryptoOps.get_outlen_vect()) {
-    test_file << std::hex << static_cast<uint16_t>(elem);
-    test_file << ",";
+    encrypted_file << static_cast<uint16_t>(elem);
+    encrypted_file << ",";
   }
 
-  test_file << "DEADBEEF";
-  test_file.close();
-
-  // This should be done in decrypt process file function.
-  get_file_content("test_file");
-
-  auto first = mFileContents.find(pattern) + pattern.length();
-  auto last = mFileContents.find(last_pattern) - last_pattern.length();
-  std::string strNew = mFileContents.substr(first, last);
-  std::cout << strNew << "  " << first << " " << last << '\n';
-
-  std::stringstream ss(strNew);
-  std::vector<uint16_t> vect;
-  for (int i; ss >> i;) {
-    vect.push_back(i);
-    if (ss.peek() == ',')
-      ss.ignore();
-  }
-  for (std::size_t i = 0; i < vect.size(); i++)
-    std::cout << vect[i] << std::endl;
-
-  mFileContents.replace(first - pattern.length(), last + last_pattern.length(),
-                        "");
-  std::cout << mFileContents;
-#if 0 
-  test_file.open("test_file", std::ios::binary);
-  test_file << mFileContents;
-  test_file.close();
-#endif
+  encrypted_file << "DEADBEEF";
+  encrypted_file.close();
 }
 
 void FileHandler::decrypt_and_write_output(
     const std::string &encrypted_file_path,
     const std::string &decrypted_file_path) {
+
+  get_file_content(encrypted_file_path);
+
+  std::string initial_pattern = "DEADBEEF,";
+  std::string last_pattern = ",DEADBEEF";
+
+  auto first_occurrence =
+      mFileContents.find(initial_pattern) + initial_pattern.length();
+  auto last_occurrence =
+      mFileContents.find(last_pattern) - last_pattern.length();
+  std::string strNew = mFileContents.substr(first_occurrence, last_occurrence);
+  // std::cout << strNew << "  " << '\n';
+
+  std::stringstream ss(strNew);
+  std::vector<uint16_t> vect;
+  for (uint16_t i; ss >> i;) {
+    vect.push_back(i);
+    if (ss.peek() == ',')
+      ss.ignore();
+  }
+  mAESCryptoOps.set_outlen_vect(vect);
+
+  // for (std::size_t i = 0; i < mAESCryptoOps.get_outlen_vect().size(); i++)
+  // std::cout << mAESCryptoOps.get_outlen_vect().at(i) << std::endl;
+
+  mFileContents.replace(first_occurrence - initial_pattern.length(),
+                        last_occurrence + last_pattern.length(), "");
+
+  // Reopen the encrypted file and put everything except outlen vector
+  std::ofstream encrypted_file;
+  encrypted_file.open(encrypted_file_path, std::ios::binary);
+  encrypted_file << mFileContents;
+  encrypted_file.close();
+
   process_file(encrypted_file_path, decrypted_file_path, false);
 }
