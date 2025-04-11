@@ -14,7 +14,7 @@ void FileCryptoAES::hex_to_bytes(const std::string &hex,
 
   // copy from unsigned char buffer to vector
   buffer.assign(bytes, bytes + kLenKey);
-  std::cout << "Key buffer:    ";
+  std::cout << "Buffer contents:    ";
   for (int i = 0; i < kLenKey; i++)
     printf("%02X", buffer[i]);
   printf("\n");
@@ -106,8 +106,8 @@ void FileCryptoAES::print_decrypted_buff() {
   printf("\n");
 }
 void FileCryptoAES::fill_iv_buffer() {
-  unsigned char *pIVBuffer = &mInitialisationVector[0];
-  std::string init_vect = "A672F9F21818CDD770A8FDF4EBF0605A";
+  // unsigned char *pIVBuffer = &mInitialisationVector[0];
+  const std::string init_vect = "A672F9F21818CDD770A8FDF4EBF0605A";
 
   // Random IV only when decrypt follows encrypt
   // RAND_bytes(pIVBuffer, kIVLen);
